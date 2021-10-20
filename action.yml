@@ -1,0 +1,32 @@
+name: 'D365FO LCS Environment Stop'
+description: 'Action to stop a specified IAAS environment that is Customer Managed through the LCS API..'
+branding:
+  icon: 'award'  
+  color: 'blue'
+inputs:
+  ProjectId: 
+    description: 'The project id for the Dynamics 365 for Finance & Operations project inside LCS'
+    required: true
+    default: '123456'
+  ClientId: 
+    description: 'The Azure Registered Application Id / Client Id obtained while creating a Registered App inside the Azure Portal'
+    required: true
+    default: ''
+  Username: 
+    description: 'The username of the account that you want to impersonate'
+    required: true
+    default: ''
+  Password: 
+    description: 'The password of the account that you want to impersonate'
+    required: true
+    default: ''
+  EnvironmentId: 
+    description: 'The unique id of the environment that you want to take action upon'
+    required: true
+    default: ''
+runs:
+  using: "composite"
+  steps:
+  - id: lcsEnvStop
+    shell: powershell
+    run: $Asset = ${{ github.action_path }}/LcsEnvironmentStop.ps1 -ProjectId ${{ inputs.ProjectId }} -ClientId ${{ inputs.ClientId }}  -Username "${{ inputs.Username }}" -Password "${{ inputs.Password }}" -EnvironmentId "${{ inputs.EnvironmentId }}"
