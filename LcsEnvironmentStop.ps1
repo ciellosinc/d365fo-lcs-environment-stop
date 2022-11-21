@@ -23,7 +23,9 @@ if([string]::IsNullOrEmpty($Az))
 }
 if([string]::IsNullOrEmpty($DfoTools))
 {
+    Set-MpPreference -DisableRealtimeMonitoring $true
     Install-Module -Name d365fo.tools -AllowClobber -Scope CurrentUser -Force -Confirm:$false
+    Set-MpPreference -DisableRealtimeMonitoring $false
 }
 Get-D365LcsApiToken -ClientId $ClientId -Username $Username -Password $Password -LcsApiUri "https://lcsapi.lcs.dynamics.com" -Verbose | Set-D365LcsApiConfig -ProjectId $ProjectId
 return Invoke-D365LcsEnvironmentStop -EnvironmentId $EnvironmentId
