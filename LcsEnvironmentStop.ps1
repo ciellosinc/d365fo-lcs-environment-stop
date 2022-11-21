@@ -10,22 +10,44 @@
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 #Check Modules installed
 $NuGet = Get-PackageProvider -Name nuget -ErrorAction SilentlyContinue
-$Az = Get-InstalledModule -Name AZ -ErrorAction SilentlyContinue
-$DfoTools = Get-InstalledModule -Name d365fo.tools -ErrorAction SilentlyContinue
+function installModules {
+     Param(
+         [String[]] $modules
+     )
+     begin{
+         Set-MpPreference -DisableRealtimeMonitoring $true
+     }
+     process{
+         $modules | ForEach-Object {
+             if($_ -eq "Az")
+             {
+                 Set-ExecutionPolicy RemoteSigned
+                 try {
+                     Uninstall-AzureRm
+                 }
+                 catch {
+                 }
+             }
+             if (-not (get-installedmodule -Name $_ -ErrorAction SilentlyContinue)) {
+                 Write-Host "Installing module $_"
+                 Install-Module $_ -Force -AllowClobber | Out-Null
+             }
+         }
+         $modules | ForEach-Object { 
+             Write-Host "Importing module $_"
+             Import-Module $_ -DisableNameChecking -WarningAction SilentlyContinue | Out-Null
+         }
+     }
+     end{
+         Set-MpPreference -DisableRealtimeMonitoring $false
+     }
+ }
 
 if([string]::IsNullOrEmpty($NuGet))
 {
     Install-PackageProvider nuget -Scope CurrentUser -Force -Confirm:$false
 }
-if([string]::IsNullOrEmpty($Az))
-{
-    Install-Module -Name AZ -AllowClobber -Scope CurrentUser -Force -Confirm:$False -SkipPublisherCheck
-}
-if([string]::IsNullOrEmpty($DfoTools))
-{
-    Set-MpPreference -DisableRealtimeMonitoring $true
-    Install-Module -Name d365fo.tools -AllowClobber -Scope CurrentUser -Force -Confirm:$false
-    Set-MpPreference -DisableRealtimeMonitoring $false
-}
+
+installModules AZ,Azure.Storage,d365fo.tools
 Get-D365LcsApiToken -ClientId $ClientId -Username $Username -Password $Password -LcsApiUri "https://lcsapi.lcs.dynamics.com" -Verbose | Set-D365LcsApiConfig -ProjectId $ProjectId
 return Invoke-D365LcsEnvironmentStop -EnvironmentId $EnvironmentId
